@@ -11,6 +11,61 @@ class ProductSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SnackBar(content: Text(''));
+    final db = FirestoreODM(appSchema, firestore: FirebaseFirestore.instance);
+
+    return StreamBuilder(
+      stream: db
+          .users(FirebaseAuth.instance.currentUser!.uid)
+          .categories('NotRefered')
+          .products
+          .stream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Text('Erreur : ${snapshot.error}');
+        }
+
+        final products = snapshot.data ?? [];
+
+        if (products.isEmpty) {
+          return Container(
+            color: Colors.white,
+            width: MediaQuery.of(context).size.width,
+            height: 200,
+            child: Center(
+              child: Text(
+                'Aucun produit',
+                style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+              ),
+            ),
+          );
+        }
+
+        return Column(
+          children: [
+            for (final product in products)
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(
+                    context,
+                    SingleProductScreen.routeName,
+                    arguments: product.id,
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: kVerticalPadding),
+                  child: ProductItem(
+                    productId: product.id,
+                    categoryId: 'NotRefered',
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
   }
 }

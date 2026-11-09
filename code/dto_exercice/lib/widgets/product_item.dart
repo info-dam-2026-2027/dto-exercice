@@ -21,8 +21,70 @@ class ProductItem extends StatefulWidget {
 }
 
 class _ProductItemState extends State<ProductItem> {
+  final db = FirestoreODM(appSchema, firestore: FirebaseFirestore.instance,);
+
   @override
   Widget build(BuildContext context) {
-    return SnackBar(content: Text(''));
+    return StreamBuilder(
+      stream: db
+          .users(FirebaseAuth.instance.currentUser!.uid)
+          .categories(widget.categoryId)
+          .products(widget.productId)
+          .stream,
+      builder: (context, asyncSnapshot) {
+        if (!asyncSnapshot.hasData) {
+          return const SizedBox();
+        }
+
+        final product = asyncSnapshot.data!;
+
+        return Container(
+          width: MediaQuery.of(context).size.width - (kHorizontalPadding * 2),
+          padding: const EdgeInsets.all(16),
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(kBorderRadius),
+            color: kMainColor,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 6,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                product.name,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                product.description,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.white.withOpacity(0.9),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                "${product.price} €",
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
